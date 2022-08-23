@@ -60,4 +60,27 @@ class TestAdd(TestBase):
             self.assertNotEqual(entry, None)
 
     def test_empty_validation(self):
-        pass
+        self.submit_input('')
+        self.assertIn(url_for('index'), self.driver.current_url)
+
+        text = self.driver.find_element_by_xpath('/html/body/div/i').text
+        self.assertIn("The name field can't be empty!", text)
+
+        entries = Games.query.all()
+        self.assertEqual(len(entries), 0) # database should be empty
+        
+    def test_name_too_long(self):
+        self.submit_input('abcdefghijklmnopqrstuvwxyzabcdefghi')
+        self.assertIn(url_for('index'), self.driver.current_url)
+
+        # You'd think the following would be the correct solution but no, the
+        #input control simply truncates whatever's entered down to the mak limit (i.e 30 chars)
+        # text = self.driver.find_element_by_xpath('/html/body/div/i').text
+        # self.assertIn("This name is too long!", text)
+        text = self.driver.find_element_by_xpath('/html/body/ul/li[1]').text
+        self.assertIn("abcdefghijklmnopqrstuvwxyzabcd", text)
+
+        entry = Games.query.filter_by(name="abcdefghijklmnopqrstuvwxyzabcd").first()
+        self.assertNotEqual(entry, None)
+
+
